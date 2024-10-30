@@ -45,13 +45,24 @@ class DB{
     static closeConnection(connection){
         connection.end();
     }
+
+    loginUsuario(callback, name, password){
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        conexion.query(`SELECT us.username, us.is_admin FROM users as us WHERE us.username="${name}" and us.password="${password}"`, function(err, rows, fields) {
+            if (err) throw err;
+            callback(rows);
+            DB.closeConnection(conexion);
+        });
+    }
     
-    obtenerProducto(id){
+    obtenerProducto(callback, id){
         const conexion = this.createMySQLConnection();
         this.openConnection(conexion);
         conexion.query(`SELECT * FROM products as p WHERE p.id = "${id}"`, function(err, rows, fields) {
             if (err) throw err;
-            console.log('The solution is: ', rows[0].solution);
+            // console.log('The solution is: ', rows[0].solution);
+            callback(rows);
             DB.closeConnection(conexion);
         });
     };
@@ -89,6 +100,15 @@ class DB{
         });
     };
     
+    obtenerCategorias(callback){
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        conexion.query(`SELECT * FROM categories`, function(err, rows, fields) {
+            if (err) throw err;
+            callback(rows);
+            DB.closeConnection(conexion);
+        });
+    };
 
     insertarProducto(callback, producto){
         const conexion = this.createMySQLConnection();
@@ -111,6 +131,16 @@ class DB{
         });
     };
 
+    insertarCategoria(callback, categoria){
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        conexion.query(`INSERT INTO categories (name, description) VALUES ('${categoria.name}', '${categoria.description}') `, function(err, rows, fields) {
+          if (err) throw err;
+          callback(rows);
+          DB.closeConnection(conexion);
+        });
+    };
+
     borrarProducto(callback, id){
         const conexion = this.createMySQLConnection();
         this.openConnection(conexion);
@@ -121,10 +151,30 @@ class DB{
         });
     };
 
+    borrarCategoria(callback, id){
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        conexion.query(`DELETE FROM categories WHERE id = "${id}"`, function(err, rows, fields) {
+          if (err) throw err;
+          callback(rows);
+          DB.closeConnection(conexion);
+        });
+    };
+
     modificarProducto(callback, id, producto){
         const conexion = this.createMySQLConnection();
         this.openConnection(conexion);
         conexion.query(`UPDATE products SET name='${producto.name}', price=${producto.price}, stock=${producto.stock}, category='${producto.category}' WHERE id = ${id}`, function(err, rows, fields) {
+          if (err) throw err;
+          callback(rows);
+          DB.closeConnection(conexion);
+        });
+    };
+
+    modificarCategoria(callback, id, categoria){
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        conexion.query(`UPDATE categories SET name='${categoria.name}', description='${categoria.description}' WHERE id = ${id}`, function(err, rows, fields) {
           if (err) throw err;
           callback(rows);
           DB.closeConnection(conexion);

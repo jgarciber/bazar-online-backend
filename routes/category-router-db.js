@@ -1,35 +1,32 @@
 const express = require('express');
 const router = express.Router();
 // const products = require('../reposories/product-repositories');
-const DB = require('../db')
+const DB = require('../db.js')
 const db = new DB ('localhost', 'root', '');
 const middleware = require('../middleware.js')
 
 
 router.get('/', middleware.auth, (request, response) => {
-    // products
-    // : Almacena información sobre productos.
+    // categorias
+    // : Almacena información sobre categorías.
     // id: int (PK, autoincremental)
-    // name: varchar(100) (Nombre del producto)
-    // price: decimal(10,2) (Precio del producto)
-    // stock: int (Cantidad en stock)
-    // category: varchar(50) (Categoría del producto)
-    // created_at: timestamp (Fecha de creación)
+    // name: varchar(100) (Nombre de la categoría)
+    // description: text (Descripción de la categoría)
     
-    // response.send(db.obtenerProductos());
-    db.obtenerProductos((rows) => {
+    // response.send(db.obtenerCategorias());
+    db.obtenerCategorias((rows) => {
         response.send(rows)
     })
 });
 
 router.post('/', middleware.authAdmin, (request, response) => {
-    db.insertarProducto((rows) => {
+    db.insertarCategoria((rows) => {
         response.status(201).send(rows)
     }, request.body);
 });
 
 router.put('/:id', middleware.authAdmin, (request, response) => {
-    db.modificarProducto((rows) => {
+    db.modificarCategoria((rows) => {
         if (rows != null){
             response.status(201).send();
         }else{
@@ -39,7 +36,7 @@ router.put('/:id', middleware.authAdmin, (request, response) => {
 });
 
 router.delete('/:id', middleware.authAdmin, (request, response) => {
-    db.borrarProducto((rows) => {
+    db.borrarCategoria((rows) => {
         if (rows != null){
             response.status(201).send();
         }else{
