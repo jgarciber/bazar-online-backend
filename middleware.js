@@ -1,6 +1,6 @@
 const auth = function(req, res, next) {
     // console.log(req.session.user);  **this is undefined**
-    console.log(req.session)
+    // console.log(req.session)
     // if (req.session.username)
         return next();
     // else

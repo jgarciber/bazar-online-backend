@@ -17,9 +17,21 @@ router.get('/', middleware.auth, (request, response) => {
     // created_at: timestamp (Fecha de creación)
     
     // response.send(db.obtenerProductos());
-    db.obtenerProductos((rows) => {
-        response.send(rows)
-    })
+    // console.log(request.params)
+    // console.log(request.query)
+    if(request.query.q){
+        db.obtenerBusquedaProductos((rows) => {
+            response.send(rows)
+        }, request.query.q)
+    }else if (request.query.cat){
+        db.obtenerBusquedaProductosPorCategoria((rows) => {
+            response.send(rows)
+        }, request.query.cat)
+    }else{
+        db.obtenerProductos((rows) => {
+            response.send(rows)
+        })
+    }
 });
 
 router.post('/', middleware.authAdmin, (request, response) => {

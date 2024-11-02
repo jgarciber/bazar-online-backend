@@ -6,6 +6,7 @@ app.use(expressSession({
     secret: 'keyboard cat',
     resave: false,
     saveUninitialized: true,
+    regenerate: false,
     cookie: { secure: false }
 }));
 const cors = require('cors');
@@ -50,7 +51,7 @@ app.post('/login', function (req, res) {
             // res.status(201).send(rows);
             // res.redirect('/content');
             // res.redirect('/products');
-            // console.log(req.session)
+            console.log(req.session)
             res.send(rows);
         }else{
             // res.redirect('/content');

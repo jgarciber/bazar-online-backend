@@ -70,13 +70,34 @@ class DB{
     obtenerProductos(callback){
         const conexion = this.createMySQLConnection();
         this.openConnection(conexion);
-        conexion.query(`SELECT * FROM products`, function(err, rows, fields) {
+        // conexion.query(`SELECT * FROM products`, function(err, rows, fields) {
+        conexion.query(`SELECT p.id, p.name, p.price, p.stock, c.name as categoryName, c.id as categoryId FROM products p INNER JOIN categories c ON c.id=p.category`, function(err, rows, fields) {
             // console.log('Estoy en el callback');
             if (err) throw err;
             callback(rows);
             DB.closeConnection(conexion);
         });
         // console.log('E ignorado el callback');
+    };
+
+    obtenerBusquedaProductos(callback, searchKeyWord){
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        conexion.query(`SELECT p.id, p.name, p.price, p.stock, c.name as categoryName, c.id as categoryId FROM products p INNER JOIN categories c ON c.id=p.category WHERE p.name LIKE '%${searchKeyWord}%'`, function(err, rows, fields) {
+            if (err) throw err;
+            callback(rows);
+            DB.closeConnection(conexion);
+        });
+    };
+
+    obtenerBusquedaProductosPorCategoria(callback, categoryId){
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        conexion.query(`SELECT p.id, p.name, p.price, p.stock, c.name as categoryName, c.id as categoryId FROM products p INNER JOIN categories c ON c.id=p.category WHERE c.id=${categoryId}`, function(err, rows, fields) {
+            if (err) throw err;
+            callback(rows);
+            DB.closeConnection(conexion);
+        });
     };
 
     obtenerVentas(callback){
