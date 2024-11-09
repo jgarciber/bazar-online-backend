@@ -1,4 +1,5 @@
 // npm install mysql
+const bcryptjs = require('bcryptjs');
 class DB{
     constructor(host, user, password){
         this.host = host;
@@ -54,6 +55,74 @@ class DB{
             callback(rows);
             DB.closeConnection(conexion);
         });
+    }
+
+    loginUsuarioBcryptjs(callback, name, password){
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        conexion.query(`SELECT us.password FROM users as us WHERE us.username="${name}"`, function(err, rows, fields) {
+            if (err) throw err;
+            if (rows.length == 1){
+                // bcryptjs.compare(userInputPassword, storedHashedPassword, (err, result) => {
+                bcryptjs.compare(password, rows[0].password, (err, result) => {
+                    if (err) {
+                        // Handle error
+                        console.error('Error comparing passwords:', err);
+                        return callback([]);
+                    }
+                    if (result) {
+                        // Passwords match, authentication successful
+                        console.log('Passwords match! User authenticated.');
+                        conexion.query(`SELECT us.username, us.is_admin FROM users as us WHERE us.username="${name}"`, function(err, rows, fields) {
+                            if (err) throw err;
+                            // DB.closeConnection(conexion);
+                            return callback(rows);
+                        });
+                    } else {
+                        // Passwords don't match, authentication failed
+                        console.log('Passwords do not match! Authentication failed.');
+                        return callback([]);
+                    }
+                     // DB.closeConnection(conexion);
+                })
+            }else{
+                // DB.closeConnection(conexion);
+                return callback([]);
+            }
+        });
+    }
+
+    async registrarUsuario(callback, name, password){
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        conexion.query(`INSERT INTO users (username, password) VALUES ("${name}", "${password}")`, function(err, rows, fields) {
+            if (err) throw err;
+            callback(rows);
+            DB.closeConnection(conexion);
+        });
+    }
+
+    async registrarUsuarioBcryptjs(callback, name, password){
+        let passwordCrypt = await bcryptjs.hash(password, Number(process.env.BCRYPT_SALT_ROUNDS))
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        conexion.query(`SELECT us.username FROM users as us WHERE us.username="${name}"`, function(err, rows, fields) {
+            if (rows.length == 1) {
+                let mensajeError = 'El usuario ya existe, pruebe registrarse con otro nombre de usuario';
+                callback(mensajeError);
+            }else{
+                conexion.query(`INSERT INTO users (username, password) VALUES ("${name}", "${passwordCrypt}")`, function(err, rows, fields) {
+                    if (err) throw err;
+                    callback(undefined);
+                });
+            }
+            DB.closeConnection(conexion);
+        });
+        // conexion.query(`INSERT INTO users (username, password) VALUES ("${name}", "${passwordCrypt}")`, function(err, rows, fields) {
+        //     if (err) throw err;
+        //     callback(rows ?? [], undefined);
+        //     DB.closeConnection(conexion);
+        // });
     }
     
     obtenerProducto(callback, id){
@@ -141,10 +210,25 @@ class DB{
         });
     };
 
+    //INSERTAR VENTA ANTES DE IMPLEMENTA EL CONTROL DE ACCESO CON JWT
+    // insertarVenta(callback, producto){
+    //     const conexion = this.createMySQLConnection();
+    //     this.openConnection(conexion);
+    //     let total = producto.price * producto.quantity;
+    //     conexion.query(`INSERT INTO sales (product_id, quantity, total) VALUES ('${producto.id}', '${producto.quantity}', '${total}') `, function(err, rows, fields) {
+    //       if (err) throw err;
+    //       callback(rows);
+    //       DB.closeConnection(conexion);
+    //     });
+    // };
     insertarVenta(callback, producto){
         const conexion = this.createMySQLConnection();
         this.openConnection(conexion);
         let total = producto.price * producto.quantity;
+        let newStock = producto.stock - producto.quantity;
+        conexion.query(`UPDATE products SET stock='${newStock}' WHERE id = ${producto.id}`, function(err, rows, fields) {
+            if (err) throw err;
+        });
         conexion.query(`INSERT INTO sales (product_id, quantity, total) VALUES ('${producto.id}', '${producto.quantity}', '${total}') `, function(err, rows, fields) {
           if (err) throw err;
           callback(rows);
@@ -185,7 +269,8 @@ class DB{
     modificarProducto(callback, id, producto){
         const conexion = this.createMySQLConnection();
         this.openConnection(conexion);
-        conexion.query(`UPDATE products SET name='${producto.name}', price=${producto.price}, stock=${producto.stock}, category='${producto.category}' WHERE id = ${id}`, function(err, rows, fields) {
+        console.log(producto)
+        conexion.query(`UPDATE products SET name='${producto.name}', price='${producto.price}', stock='${producto.stock}', category='${producto.category}' WHERE id = ${id}`, function(err, rows, fields) {
           if (err) throw err;
           callback(rows);
           DB.closeConnection(conexion);

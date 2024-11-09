@@ -6,7 +6,7 @@ const db = new DB ('localhost', 'root', '');
 const middleware = require('../middleware.js')
 
 
-router.get('/', middleware.auth, (request, response) => {
+router.get('/', middleware.authToken, (request, response) => {
     // products
     // : Almacena información sobre productos.
     // id: int (PK, autoincremental)
@@ -16,7 +16,6 @@ router.get('/', middleware.auth, (request, response) => {
     // category: varchar(50) (Categoría del producto)
     // created_at: timestamp (Fecha de creación)
     
-    // response.send(db.obtenerProductos());
     // console.log(request.params)
     // console.log(request.query)
     if(request.query.q){
@@ -34,13 +33,13 @@ router.get('/', middleware.auth, (request, response) => {
     }
 });
 
-router.post('/', middleware.authAdmin, (request, response) => {
+router.post('/', middleware.authTokenAdmin, (request, response) => {
     db.insertarProducto((rows) => {
         response.status(201).send(rows)
     }, request.body);
 });
 
-router.put('/:id', middleware.authAdmin, (request, response) => {
+router.put('/:id', middleware.authTokenAdmin, (request, response) => {
     db.modificarProducto((rows) => {
         if (rows != null){
             response.status(201).send();
@@ -50,7 +49,7 @@ router.put('/:id', middleware.authAdmin, (request, response) => {
     }, request.params.id, request.body);
 });
 
-router.delete('/:id', middleware.authAdmin, (request, response) => {
+router.delete('/:id', middleware.authTokenAdmin, (request, response) => {
     db.borrarProducto((rows) => {
         if (rows != null){
             response.status(201).send();

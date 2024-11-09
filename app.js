@@ -1,21 +1,34 @@
 const express = require('express');
 const app = express ();
 app.use(express.json());
-const expressSession = require('express-session');
-app.use(expressSession({
-    secret: 'keyboard cat',
-    resave: false,
-    saveUninitialized: true,
-    regenerate: false,
-    cookie: { secure: false }
-}));
+// const expressSession = require('express-session');
+// app.use(expressSession({
+//     secret: 'keyboard cat',
+//     resave: false,
+//     saveUninitialized: true,
+//     regenerate: false,
+//     cookie: { secure: false }
+// }));
+const jwt = require('jsonwebtoken');
+// const jwt_secret = require('crypto').randomBytes(64).toString('hex');
+
+const dotenv = require('dotenv');
+// get config vars
+dotenv.config();
+
+// access config var
+// process.env.TOKEN_SECRET;
+
+const bcryptjs = require('bcryptjs');
+
 const cors = require('cors');
 app.use(cors());
 
 const DB = require('./db')
 const db = new DB ('localhost', 'root', '');
 
-const PORT = process.env.PORT || 3000;
+// const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
 // import { auth, authAdmin } from './middleware.mjs';
 // const {auth, authAdmin} = require('./middleware.js')
@@ -43,20 +56,42 @@ app.get('/status', (request, response) => {
 });
 
 app.post('/login', function (req, res) {
-    db.loginUsuario((rows) => {
+    // db.loginUsuario((rows) => {
+    db.loginUsuarioBcryptjs((rows) => {
         if (rows.length == 1){
-            req.session.username = rows[0].username;
-            if (rows[0].is_admin) req.session.is_admin = true;
-            req.session.save();
-            // res.status(201).send(rows);
+            // req.session.username = rows[0].username;
+            // if (rows[0].is_admin) req.session.is_admin = true;
+            // req.session.save();
             // res.redirect('/content');
-            // res.redirect('/products');
-            console.log(req.session)
-            res.send(rows);
+            // res.send(rows);
+            // const token = generateAccessToken({ username: req.body.username });
+            // const token = middleware.generateAccessToken({ username: rows[0].username });
+            let token = '';
+            if (rows[0].is_admin){
+                token = middleware.generateAccessToken({ username: rows[0].username, is_admin: true });
+            }else{
+                token = middleware.generateAccessToken({ username: rows[0].username, is_admin: false });
+            }
+            res.json({rows, token});
         }else{
             // res.redirect('/content');
             // res.sendStatus(401);
-            res.send([{username : ''}]);
+            res.send({username : ''});
+        } 
+    }, req.body.username, req.body.password);
+});
+
+
+app.post('/singup', function (req, res) {
+    // db.registrarUsuario((rows) => {
+    db.registrarUsuarioBcryptjs((err) => {
+        if (err == undefined){
+            res.status(200).send('Se ha registrado el usuario correctamente');
+        }else{
+            // res.redirect('/content');
+            // res.sendStatus(401);
+            // res.send('Fallo en el registro');
+            res.send(err);
         } 
     }, req.body.username, req.body.password);
 });

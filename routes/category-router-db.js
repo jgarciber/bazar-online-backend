@@ -6,7 +6,7 @@ const db = new DB ('localhost', 'root', '');
 const middleware = require('../middleware.js')
 
 
-router.get('/', middleware.auth, (request, response) => {
+router.get('/', middleware.authToken, (request, response) => {
     // categorias
     // : Almacena información sobre categorías.
     // id: int (PK, autoincremental)
@@ -19,13 +19,13 @@ router.get('/', middleware.auth, (request, response) => {
     })
 });
 
-router.post('/', middleware.authAdmin, (request, response) => {
+router.post('/', middleware.authTokenAdmin, (request, response) => {
     db.insertarCategoria((rows) => {
         response.status(201).send(rows)
     }, request.body);
 });
 
-router.put('/:id', middleware.authAdmin, (request, response) => {
+router.put('/:id', middleware.authTokenAdmin, (request, response) => {
     db.modificarCategoria((rows) => {
         if (rows != null){
             response.status(201).send();
@@ -35,7 +35,7 @@ router.put('/:id', middleware.authAdmin, (request, response) => {
     }, request.params.id, request.body);
 });
 
-router.delete('/:id', middleware.authAdmin, (request, response) => {
+router.delete('/:id', middleware.authTokenAdmin, (request, response) => {
     db.borrarCategoria((rows) => {
         if (rows != null){
             response.status(201).send();
