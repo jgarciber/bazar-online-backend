@@ -43,6 +43,10 @@ const categoryRouter = require("./routes/category-router-db");
 app.use('/categories', categoryRouter);
 const salesRouter = require("./routes/sales-router-db");
 app.use('/sales', salesRouter);
+const usersRouter = require("./routes/users-router-db");
+app.use('/users', usersRouter);
+const ordersRouter = require("./routes/orders-router-db");
+app.use('/orders', ordersRouter);
 
 app.listen(PORT, () => {
     console.log("Server Listening on PORT:", PORT);
@@ -68,9 +72,9 @@ app.post('/login', function (req, res) {
             // const token = middleware.generateAccessToken({ username: rows[0].username });
             let token = '';
             if (rows[0].is_admin){
-                token = middleware.generateAccessToken({ username: rows[0].username, is_admin: true });
+                token = middleware.generateAccessToken({ user_id: rows[0].id, username: rows[0].username, is_admin: true });
             }else{
-                token = middleware.generateAccessToken({ username: rows[0].username, is_admin: false });
+                token = middleware.generateAccessToken({ user_id: rows[0].id, username: rows[0].username, is_admin: false });
             }
             res.json({rows, token});
         }else{
@@ -82,7 +86,7 @@ app.post('/login', function (req, res) {
 });
 
 
-app.post('/singup', function (req, res) {
+app.post('/signup', function (req, res) {
     // db.registrarUsuario((rows) => {
     db.registrarUsuarioBcryptjs((err) => {
         if (err == undefined){

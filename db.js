@@ -50,7 +50,7 @@ class DB{
     loginUsuario(callback, name, password){
         const conexion = this.createMySQLConnection();
         this.openConnection(conexion);
-        conexion.query(`SELECT us.username, us.is_admin FROM users as us WHERE us.username="${name}" and us.password="${password}"`, function(err, rows, fields) {
+        conexion.query(`SELECT us.id, us.username, us.is_admin FROM users as us WHERE us.username="${name}" and us.password="${password}"`, function(err, rows, fields) {
             if (err) throw err;
             callback(rows);
             DB.closeConnection(conexion);
@@ -73,7 +73,7 @@ class DB{
                     if (result) {
                         // Passwords match, authentication successful
                         console.log('Passwords match! User authenticated.');
-                        conexion.query(`SELECT us.username, us.is_admin FROM users as us WHERE us.username="${name}"`, function(err, rows, fields) {
+                        conexion.query(`SELECT us.id, us.username, us.is_admin FROM users as us WHERE us.username="${name}"`, function(err, rows, fields) {
                             if (err) throw err;
                             // DB.closeConnection(conexion);
                             return callback(rows);
@@ -92,6 +92,26 @@ class DB{
         });
     }
 
+    obtenerUsuarios(callback){
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        conexion.query(`SELECT id, username, is_admin as isAdmin FROM users`, function(err, rows, fields) {
+            if (err) throw err;
+            callback(rows);
+            DB.closeConnection(conexion);
+        });
+    }
+
+    obtenerUsuario(callback, userId){
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        conexion.query(`SELECT id, username, is_admin as isAdmin FROM users WHERE id='${userId}'`, function(err, rows, fields) {
+            if (err) throw err;
+            callback(rows);
+            DB.closeConnection(conexion);
+        });
+    }
+
     async registrarUsuario(callback, name, password){
         const conexion = this.createMySQLConnection();
         this.openConnection(conexion);
@@ -102,8 +122,9 @@ class DB{
         });
     }
 
-    async registrarUsuarioBcryptjs(callback, name, password){
+    async registrarUsuarioBcryptjs(callback, name, password, isAdmin=0){
         let passwordCrypt = await bcryptjs.hash(password, Number(process.env.BCRYPT_SALT_ROUNDS))
+        isAdmin = isAdmin ? 1 : 0;
         const conexion = this.createMySQLConnection();
         this.openConnection(conexion);
         conexion.query(`SELECT us.username FROM users as us WHERE us.username="${name}"`, function(err, rows, fields) {
@@ -111,7 +132,7 @@ class DB{
                 let mensajeError = 'El usuario ya existe, pruebe registrarse con otro nombre de usuario';
                 callback(mensajeError);
             }else{
-                conexion.query(`INSERT INTO users (username, password) VALUES ("${name}", "${passwordCrypt}")`, function(err, rows, fields) {
+                conexion.query(`INSERT INTO users (username, password, is_admin) VALUES ("${name}", "${passwordCrypt}", "${isAdmin}")`, function(err, rows, fields) {
                     if (err) throw err;
                     callback(undefined);
                 });
@@ -169,6 +190,16 @@ class DB{
         });
     };
 
+    obtenerBusquedaUsuario(callback, searchKeyWord){
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        conexion.query(`SELECT id, username, is_admin as isAdmin FROM users WHERE username LIKE '%${searchKeyWord}%'`, function(err, rows, fields) {
+            if (err) throw err;
+            callback(rows);
+            DB.closeConnection(conexion);
+        });
+    };
+
     obtenerVentas(callback){
         const conexion = this.createMySQLConnection();
         this.openConnection(conexion);
@@ -183,7 +214,60 @@ class DB{
         const conexion = this.createMySQLConnection();
         this.openConnection(conexion);
         // conexion.query(`SELECT p.id, p.name, p.price, s.quantity, s.total, s.sale_date FROM sales s INNER JOIN products p ON p.id=s.product_id`, function(err, rows, fields) {
-        conexion.query(`SELECT p.id as id, p.name as name, p.price as price, s.quantity as quantity, s.total as total, s.sale_date as sale_date FROM sales s INNER JOIN products p ON p.id=s.product_id ORDER BY s.sale_date DESC`, function(err, rows, fields) {
+        // conexion.query(`SELECT p.id as id, p.name as name, p.price as price, s.quantity as quantity, s.total as total, s.sale_date as sale_date, us.username as username FROM sales s INNER JOIN products p ON p.id=s.product_id INNER JOIN users us ON us.id=s.user_id ORDER BY s.sale_date DESC`, function(err, rows, fields) {
+        conexion.query(`SELECT p.id as id, s.order_id as order_id, p.name as name, cat.name as category, p.price as price, s.quantity as quantity, s.total as total, s.sale_date as sale_date, us.username as username FROM sales s INNER JOIN products p ON p.id=s.product_id INNER JOIN users us ON us.id=s.user_id INNER JOIN categories cat ON cat.id=p.category ORDER BY s.sale_date DESC`, function(err, rows, fields) {
+            if (err) throw err;
+            callback(rows);
+            DB.closeConnection(conexion);
+        });
+    };
+
+    obtenerVentasUsuario(callback, userId){
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        // conexion.query(`SELECT p.id, p.name, p.price, s.quantity, s.total, s.sale_date FROM sales s INNER JOIN products p ON p.id=s.product_id`, function(err, rows, fields) {
+        // conexion.query(`SELECT p.id as id, p.name as name, p.price as price, s.quantity as quantity, s.total as total, s.sale_date as sale_date, us.username as username FROM sales s INNER JOIN products p ON p.id=s.product_id INNER JOIN users us ON us.id=s.user_id ORDER BY s.sale_date DESC`, function(err, rows, fields) {
+        conexion.query(`SELECT p.id as id, s.order_id as order_id, p.name as name, cat.name as category, p.price as price, s.quantity as quantity, s.total as total, s.sale_date as sale_date, us.username as username FROM sales s INNER JOIN products p ON p.id=s.product_id INNER JOIN users us ON us.id=s.user_id INNER JOIN categories cat ON cat.id=p.category WHERE us.id='${userId}' ORDER BY s.sale_date DESC`, function(err, rows, fields) {
+            if (err) throw err;
+            callback(rows);
+            DB.closeConnection(conexion);
+        });
+    };
+
+    obtenerBusquedaVentas(callback, query, type, startDate, endDate){
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        let busquedaPorUsuario = `WHERE us.username LIKE '%${query}%'`;
+        let busquedaPorPedido = `WHERE s.order_id LIKE '%${query}%'`;
+        let busquedaPorProducto = `WHERE p.name LIKE '%${query}%'`;
+        let busquedaPorCategoria = `WHERE cat.name LIKE '%${query}%'`;
+        //para que se busque hasta endDate como el último día completo, hay que añadirlo manualmente ya que el cliente envía las fechas en formato yyyy/mm/dd
+        let busquedaPorFecha = `AND s.sale_date >= DATE('${startDate}') AND s.sale_date <= TIMESTAMP('${endDate} 23:59:59')`;
+        console.log(startDate)
+        if(startDate == '1970/01/01') busquedaPorFecha=''
+        // let busquedaPorFecha = `WHERE DATE(s.sale_date) = DATE('${query}')`;
+        let cadenaPrincipal = `SELECT p.id as id, p.name as name, s.order_id as order_id, cat.name as category, p.price as price, s.quantity as quantity, s.total as total, s.sale_date as sale_date, us.username as username FROM sales s INNER JOIN products p ON p.id=s.product_id INNER JOIN users us ON us.id=s.user_id INNER JOIN categories cat ON cat.id=p.category `;
+        let finalCadena = ` ORDER BY s.sale_date DESC`;
+        let cadenaCompleta = '';
+        switch(type){
+            case 'user':
+                cadenaCompleta += cadenaPrincipal + busquedaPorUsuario + busquedaPorFecha + finalCadena;
+                break;
+            case 'order':
+                cadenaCompleta += cadenaPrincipal + busquedaPorPedido + busquedaPorFecha + finalCadena;
+                break;
+            case 'product':
+                cadenaCompleta += cadenaPrincipal + busquedaPorProducto + busquedaPorFecha + finalCadena;
+                break;
+            case 'category':
+                cadenaCompleta += cadenaPrincipal + busquedaPorCategoria + busquedaPorFecha + finalCadena;
+                break;
+            default:
+                cadenaCompleta += cadenaPrincipal + finalCadena;
+                break;
+        }
+        // console.log(cadenaCompleta);
+        conexion.query(cadenaCompleta, function(err, rows, fields) {
             if (err) throw err;
             callback(rows);
             DB.closeConnection(conexion);
@@ -221,7 +305,7 @@ class DB{
     //       DB.closeConnection(conexion);
     //     });
     // };
-    insertarVenta(callback, producto){
+    insertarVenta(callback, producto, pedido){
         const conexion = this.createMySQLConnection();
         this.openConnection(conexion);
         let total = producto.price * producto.quantity;
@@ -229,7 +313,7 @@ class DB{
         conexion.query(`UPDATE products SET stock='${newStock}' WHERE id = ${producto.id}`, function(err, rows, fields) {
             if (err) throw err;
         });
-        conexion.query(`INSERT INTO sales (product_id, quantity, total) VALUES ('${producto.id}', '${producto.quantity}', '${total}') `, function(err, rows, fields) {
+        conexion.query(`INSERT INTO sales (product_id, quantity, total, user_id, order_id) VALUES ('${producto.id}', '${producto.quantity}', '${total}', '${pedido.user_id}', '${pedido.order_id}') `, function(err, rows, fields) {
           if (err) throw err;
           callback(rows);
           DB.closeConnection(conexion);
@@ -245,6 +329,37 @@ class DB{
           DB.closeConnection(conexion);
         });
     };
+
+    obtenerPedidos(callback){
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        conexion.query(`SELECT * FROM orders`, function(err, rows, fields) {
+            if (err) throw err;
+            callback(rows);
+            DB.closeConnection(conexion);
+        });
+    };
+
+    obtenerPedidosUsuario(callback, userId){
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        conexion.query(`SELECT * FROM orders WHERE user_id='${userId}'`, function(err, rows, fields) {
+            if (err) throw err;
+            callback(rows);
+            DB.closeConnection(conexion);
+        });
+    };
+
+    insertarPedido(callback, pedido){
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        conexion.query(`INSERT INTO orders (user_id, total_articles, subtotal, discount, calculated_discount, subtotal_with_discount, taxes, calculated_taxes, total) VALUES ('${pedido.user_id}', '${pedido.total_articulos}', '${pedido.subtotal}', '${pedido.descuento}', '${pedido.descuentoTotal}', '${pedido.subtotalConDescuento}', '${pedido.impuesto}', '${pedido.impuestos}', '${pedido.totalFinal}') `, function(err, rows, fields) {
+          if (err) throw err;
+          callback(rows);
+          DB.closeConnection(conexion);
+        });
+    };
+
 
     borrarProducto(callback, id){
         const conexion = this.createMySQLConnection();
@@ -266,10 +381,19 @@ class DB{
         });
     };
 
+    borrarUsuario(callback, id){
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        conexion.query(`DELETE FROM users WHERE id = "${id}"`, function(err, rows, fields) {
+          if (err) throw err;
+          callback(rows);
+          DB.closeConnection(conexion);
+        });
+    };
+
     modificarProducto(callback, id, producto){
         const conexion = this.createMySQLConnection();
         this.openConnection(conexion);
-        console.log(producto)
         conexion.query(`UPDATE products SET name='${producto.name}', price='${producto.price}', stock='${producto.stock}', category='${producto.category}' WHERE id = ${id}`, function(err, rows, fields) {
           if (err) throw err;
           callback(rows);
@@ -281,6 +405,24 @@ class DB{
         const conexion = this.createMySQLConnection();
         this.openConnection(conexion);
         conexion.query(`UPDATE categories SET name='${categoria.name}', description='${categoria.description}' WHERE id = ${id}`, function(err, rows, fields) {
+          if (err) throw err;
+          callback(rows);
+          DB.closeConnection(conexion);
+        });
+    };
+
+    async modificarUsuario(callback, id, usuario){
+        let isAdmin = usuario.isAdmin ? 1 : 0;
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+        let consulta = '';
+        if(usuario.password == undefined){
+            consulta = `UPDATE users SET is_admin='${isAdmin}' WHERE id = ${id}`;
+        }else{
+            let passwordCrypt = await bcryptjs.hash(usuario.password, Number(process.env.BCRYPT_SALT_ROUNDS))
+            consulta = `UPDATE users SET password='${passwordCrypt}', is_admin='${isAdmin}' WHERE id = ${id}`;
+        }
+        conexion.query(consulta, function(err, rows, fields) {
           if (err) throw err;
           callback(rows);
           DB.closeConnection(conexion);

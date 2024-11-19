@@ -35,14 +35,19 @@ router.get('/', middleware.authToken, (request, response) => {
 
 router.post('/', middleware.authTokenAdmin, (request, response) => {
     db.insertarProducto((rows) => {
-        response.status(201).send(rows)
+        response.status(201).json({
+            message: `Se ha añadido el producto '${request.body.name}' correctamente`
+        });
     }, request.body);
 });
 
 router.put('/:id', middleware.authTokenAdmin, (request, response) => {
     db.modificarProducto((rows) => {
         if (rows != null){
-            response.status(201).send();
+            // response.status(204).send();
+            response.status(200).json({
+                message: `Se ha modificado el producto '${request.body.name}' correctamente`
+            });
         }else{
             response.status(404).send();
         }
@@ -52,7 +57,10 @@ router.put('/:id', middleware.authTokenAdmin, (request, response) => {
 router.delete('/:id', middleware.authTokenAdmin, (request, response) => {
     db.borrarProducto((rows) => {
         if (rows != null){
-            response.status(201).send();
+            // response.status(204).send();
+            response.status(200).json({
+                message: `Se ha borrado el producto correctamente`
+            });
         }else{
             response.status(404).send();
         }
