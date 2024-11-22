@@ -15,9 +15,6 @@ router.get('/', middleware.authToken, (request, response) => {
     // stock: int (Cantidad en stock)
     // category: varchar(50) (Categoría del producto)
     // created_at: timestamp (Fecha de creación)
-    
-    // console.log(request.params)
-    // console.log(request.query)
     if(request.query.q){
         db.obtenerBusquedaProductos((rows) => {
             response.send(rows)

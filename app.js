@@ -61,7 +61,7 @@ app.get('/status', (request, response) => {
 
 app.post('/login', function (req, res) {
     // db.loginUsuario((rows) => {
-    db.loginUsuarioBcryptjs((rows) => {
+    db.loginUsuarioBcryptjs((rows, err) => {
         if (rows.length == 1){
             // req.session.username = rows[0].username;
             // if (rows[0].is_admin) req.session.is_admin = true;
@@ -80,7 +80,7 @@ app.post('/login', function (req, res) {
         }else{
             // res.redirect('/content');
             // res.sendStatus(401);
-            res.send({username : ''});
+            res.send({username : '', error: err});
         } 
     }, req.body.username, req.body.password);
 });
@@ -90,14 +90,13 @@ app.post('/signup', function (req, res) {
     // db.registrarUsuario((rows) => {
     db.registrarUsuarioBcryptjs((err) => {
         if (err == undefined){
-            res.status(200).send('Se ha registrado el usuario correctamente');
+            res.status(201).json({
+                message: `Se ha registrado el usuario correctamente`
+            });
         }else{
-            // res.redirect('/content');
-            // res.sendStatus(401);
-            // res.send('Fallo en el registro');
             res.send(err);
         } 
-    }, req.body.username, req.body.password);
+    }, req.body);
 });
 // app.get('/login', function (req, res) {
 //     if (!req.query.username || !req.query.password) {

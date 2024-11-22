@@ -6,15 +6,21 @@ const middleware = require('../middleware.js');
 
 
 router.get('/', middleware.authToken, (req, res) => {
-    db.obtenerPedidosUsuario((rows) => {
-        res.send(rows)
-    }, req.user.user_id)
-});
-
-router.get('/all', middleware.authTokenAdmin, (req, res) => {
-    db.obtenerPedidos((rows) => {
-        res.send(rows)
-    })
+    if(req.user.is_admin){
+        if(req.query.q){
+            db.obtenerBusquedaPedido((rows) => {
+                res.send(rows)
+            }, req.query.q)
+        }else{
+            db.obtenerPedidos((rows) => {
+                res.send(rows)
+            })
+        }
+    }else{
+        db.obtenerPedidosUsuario((rows) => {
+            res.send(rows)
+        }, req.user.user_id)
+    }
 });
 
 router.post('/', middleware.authToken, (request, response) => {

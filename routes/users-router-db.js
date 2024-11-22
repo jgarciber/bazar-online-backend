@@ -29,7 +29,7 @@ router.post('/', middleware.authTokenAdmin, (req, res) => {
         if (err == undefined){
             // res.status(201).send();
             res.status(201).json({
-                message: `Se ha añadido el usuario '${req.body.username}' correctamente`
+                message: `Se ha registrado el usuario '${req.body.username}' correctamente`
             });
         }else{
             res.send(err);
