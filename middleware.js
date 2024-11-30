@@ -36,4 +36,4 @@ function authTokenAdmin(req, res, next) {
         next()
     })
 }
-module.exports = {auth, authAdmin, generateAccessToken, authToken, authTokenAdmin};
+module.exports = {generateAccessToken, authToken, authTokenAdmin};
