@@ -1,20 +1,16 @@
 const express = require('express');
 const router = express.Router();
-// const products = require('../reposories/product-repositories');
 const DB = require('../db')
 const db = new DB ('localhost', 'root', '');
 const middleware = require('../middleware.js')
 
+// products (Productos):
+// Contiene los productos disponibles en la tienda.
+// Campos: ‘id’ (clave primaria), ‘name’, ‘price’, ‘stock’, ‘category’ (clave foránea de ‘categories’), ‘created_at’.
+// Relación: Se asocia con ‘categories’ a través de la clave foránea ‘category’. Si se elimina una categoría, los productos
+// relacionados se eliminan automáticamente.
 
 router.get('/', middleware.authToken, (request, response) => {
-    // products
-    // : Almacena información sobre productos.
-    // id: int (PK, autoincremental)
-    // name: varchar(100) (Nombre del producto)
-    // price: decimal(10,2) (Precio del producto)
-    // stock: int (Cantidad en stock)
-    // category: varchar(50) (Categoría del producto)
-    // created_at: timestamp (Fecha de creación)
     if(request.query.q){
         db.obtenerBusquedaProductos((rows) => {
             response.send(rows)

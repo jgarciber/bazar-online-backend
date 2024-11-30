@@ -1,19 +1,16 @@
 const express = require('express');
 const router = express.Router();
-// const products = require('../reposories/product-repositories');
-const DB = require('../db.js')
+const DB = require('../db')
 const db = new DB ('localhost', 'root', '');
 const middleware = require('../middleware.js')
 
+// categories (Categorías):
+// Almacena las categorías de los productos.
+// Campos: ‘id’ (clave primaria), ‘name’ (nombre de la categoría), ‘description’ (descripción).
+// Relación: La tabla ‘products’ referencia esta tabla mediante la clave foránea ‘category’. 
+// Si se elimina una categoría, los productos asociados también se eliminan (ON DELETE CASCADE).
 
-router.get('/', middleware.authToken, (request, response) => {
-    // categorias
-    // : Almacena información sobre categorías.
-    // id: int (PK, autoincremental)
-    // name: varchar(100) (Nombre de la categoría)
-    // description: text (Descripción de la categoría)
-    
-    // response.send(db.obtenerCategorias());
+router.get('/', middleware.authToken, (request, response) => {   
     db.obtenerCategorias((rows) => {
         response.send(rows)
     })

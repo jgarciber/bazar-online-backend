@@ -1,10 +1,13 @@
 const express = require('express');
 const router = express.Router();
-// const products = require('../reposories/product-repositories');
 const DB = require('../db.js')
 const db = new DB ('localhost', 'root', '');
 const middleware = require('../middleware.js')
 
+// Contiene la información de los usuarios del sistema.
+// Campos: ‘id’ (clave primaria), ‘username’, ‘password’, ‘is_admin’, ‘first_name’, ‘last_name’, ‘email’, ‘is_active’.
+// Relación: Los usuarios están asociados con ‘orders’ y ‘sales’. Si un usuario es eliminado, los registros asociados 
+// en ‘orders’ y ‘sales’ mantienen la relación con NULL.
 
 router.get('/', middleware.authToken, (req, res) => {
     if(req.user.is_admin){
@@ -34,7 +37,7 @@ router.post('/', middleware.authTokenAdmin, (req, res) => {
         }else{
             res.send(err);
         } 
-    }, req.body.username, req.body.password, req.body.isAdmin);
+    }, req.body);
 });
 
 router.put('/:id', middleware.authToken, (req, res) => {
@@ -56,7 +59,9 @@ router.put('/:id', middleware.authToken, (req, res) => {
 
 router.delete('/:id', middleware.authTokenAdmin, (req, res) => {
     //Un usuario no puede borrarse a sí mismo, debe hacerlo otro usuario administrador
-    if(req.user.user_id == req.params.id) return res.status(403).send('El usuario no puede borrarse a sí mismo, debe hacerlo otro usuario administrador autorizado')
+    if(req.user.user_id == req.params.id){
+        return res.status(403).send('El usuario no puede borrarse a sí mismo, debe hacerlo otro usuario administrador autorizado')
+    }
     db.borrarUsuario((rows) => {
         if (rows != null){
             // res.status(204).send();

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Factura</title>
+</head>
+
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <!-- Encabezado -->
+        <div class="flex justify-between items-center mb-4">
+            <div class="w-10/12">
+                <h1 class="text-3xl font-bold">Factura</h1>
+            </div>
+            <div class="w-2/12">
+                <!-- <img class="w-full h-auto" src="https://github.com/parzibyte.png" alt="Logotipo"> -->
+            </div>
+        </div>
+
+        <hr class="my-4">
+
+        <!-- Información de cliente y factura -->
+        <div class="flex justify-between items-center mb-4">
+            <div class="w-10/12">
+                <h2 class="text-lg font-semibold">Nombre Apellidos</h2>
+                <!-- <h3 class="text-sm text-gray-600">https://parzibyte.me/blog</h3> -->
+            </div>
+            <div class="w-2/12 text-center">
+                <strong>Fecha</strong>
+                <br>
+                2024-11-30
+                <br>
+                <strong>Factura No.</strong>
+                <br>
+                1
+            </div>
+        </div>
+
+        <hr class="my-4">
+
+        <!-- Cliente y remitente -->
+        <div class="flex justify-between text-center mb-8">
+            <div class="w-6/12">
+                <h2 class="text-2xl font-semibold">Cliente</h2>
+                <strong>Nombre Apellidos</strong>
+            </div>
+            <div class="w-6/12">
+                <h2 class="text-2xl font-semibold">Remitente</h2>
+                <strong>Nombre Apellidos</strong>
+            </div>
+        </div>
+
+        <!-- Tabla de productos -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full table-auto border-collapse border border-gray-300">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="border border-gray-300 px-4 py-2 text-left">Descripción</th>
+                        <th class="border border-gray-300 px-4 py-2 text-left">Cantidad</th>
+                        <th class="border border-gray-300 px-4 py-2 text-left">Precio unitario</th>
+                        <th class="border border-gray-300 px-4 py-2 text-left">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Aquí iría la tabla de productos con datos dinámicos -->
+                    {{tablaProductos}}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="border-t border-gray-300 px-4 py-2 text-right">Subtotal</td>
+                        <td class="border-t border-gray-300 px-4 py-2">{{subtotal}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="border-t border-gray-300 px-4 py-2 text-right">Descuento</td>
+                        <td class="border-t border-gray-300 px-4 py-2">{{descuento}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="border-t border-gray-300 px-4 py-2 text-right">Subtotal con descuento</td>
+                        <td class="border-t border-gray-300 px-4 py-2">{{subtotalConDescuento}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="border-t border-gray-300 px-4 py-2 text-right">Impuestos</td>
+                        <td class="border-t border-gray-300 px-4 py-2">{{impuestos}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="border-t border-gray-300 px-4 py-2 text-right">
+                            <h4 class="font-bold">Total</h4>
+                        </td>
+                        <td class="border-t border-gray-300 px-4 py-2">
+                            <h4 class="font-bold">{{total}}</h4>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- Mensaje de agradecimiento -->
+        <div class="text-center mt-8">
+            <p class="text-lg font-semibold">Gracias por su compra</p>
+        </div>
+    </div>
+</body>
+
+</html>

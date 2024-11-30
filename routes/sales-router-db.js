@@ -4,15 +4,13 @@ const DB = require('../db')
 const db = new DB ('localhost', 'root', '');
 const middleware = require('../middleware.js');
 
+// Registra las ventas de productos realizadas a través de pedidos.
+// Campos: ‘id’ (clave primaria), ‘product_id’ (clave foránea de ‘products’), ‘user_id’ (clave foránea de ‘users’), 
+// ‘order_id’ (clave foránea de ‘orders’), ‘quantity’, ‘total’, ‘sale_date’.
+// Relación: Se asocia con ‘products’, ‘users’ y ‘orders’ a través de las claves foráneas correspondientes. 
+// Si un producto, usuario o pedido se elimina, la relación se actualiza a NULL.
 
 router.get('/', middleware.authToken, (request, response) => {
-//     sales
-// : Almacena las ventas realizadas.
-// id: int (PK, autoincremental)
-// product_id: int (FK que referencia a products.id)
-// quantity: int (Cantidad vendida)
-// total: decimal(10,2) (Precio total de la venta)
-// sale_date: timestamp (Fecha de la venta)
     if(request.user.is_admin){
         if(request.query.q){
             db.obtenerBusquedaVentas((rows) => {
