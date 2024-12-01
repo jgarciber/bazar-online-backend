@@ -9,7 +9,7 @@ Para acceder a la plataforma, los usuarios solo requieren un dispositivo con con
 ## Video explicativo
 
 Para obtener una visión general rápida de la aplicación, puedes ver el siguiente video en YouTube, donde se explica brevemente cómo funciona la plataforma:  
-[Enlace al video en YouTube](https://www.youtube.com/your-video-url).
+[Enlace al video en YouTube](https://www.youtube.com/watch?v=L4OUwC2NEs8).
 
 ## Tecnologías utilizadas
 
