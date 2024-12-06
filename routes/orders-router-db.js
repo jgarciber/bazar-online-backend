@@ -4,6 +4,51 @@ const DB = require('../db.js')
 const db = new DB ('localhost', 'root', '');
 const middleware = require('../middleware.js');
 
+const { z } = require('zod');
+
+// Esquema de validación para los datos del pedido (todos los valores recibidos como string)
+const orderSchema = z.object({
+    user_id: z.string()
+        .transform(value => parseInt(value, 10)) // Convertir el string a número
+        .refine(value => !isNaN(value) && value > 0, "El 'user_id' debe ser un número mayor que 0"),
+
+    total_articulos: z.string()
+        .transform(value => parseInt(value, 10)) // Convertir el string a número
+        .refine(value => !isNaN(value) && value >= 1, "Debe haber al menos un artículo en el pedido"),
+
+    subtotal: z.string()
+        .transform(value => parseFloat(value)) // Convertir el string a número flotante
+        .refine(value => !isNaN(value) && value >= 0, "El subtotal no puede ser negativo"),
+
+    descuento: z.string()
+        .transform(value => parseFloat(value)) // Convertir el string a número flotante
+        .refine(value => !isNaN(value) && value >= 0, "El descuento no puede ser negativo"),
+
+    descuentoTotal: z.string()
+        .transform(value => parseFloat(value)) // Convertir el string a número flotante
+        .refine(value => !isNaN(value) && value >= 0, "El descuento total no puede ser negativo"),
+
+    subtotalConDescuento: z.string()
+        .transform(value => parseFloat(value)) // Convertir el string a número flotante
+        .refine(value => !isNaN(value) && value >= 0, "El subtotal con descuento no puede ser negativo"),
+
+    impuesto: z.string()
+        .transform(value => parseFloat(value)) // Convertir el string a número flotante
+        .refine(value => !isNaN(value) && value >= 0, "El impuesto no puede ser negativo"),
+
+    impuestos: z.string()
+        .transform(value => parseFloat(value)) // Convertir el string a número flotante
+        .refine(value => !isNaN(value) && value >= 0, "Los impuestos no pueden ser negativos"),
+
+    totalFinal: z.string()
+        .transform(value => parseFloat(value)) // Convertir el string a número flotante
+        .refine(value => !isNaN(value) && value >= 0, "El total final no puede ser negativo")
+})
+.refine((data) => data.totalFinal >= data.subtotalConDescuento, {
+    message: "El total final no puede ser menor que el subtotal con descuento",
+    path: ["totalFinal"]
+});
+
 const pdf = require("html-pdf");
 const fs = require("fs");
 const ubicacionPlantilla = require.resolve("../templates/order-pdf-template.html");
@@ -44,12 +89,39 @@ router.get('/', middleware.authToken, (req, res) => {
     }
 });
 
-router.post('/', middleware.authToken, (request, response) => {
-    // Comprobación si el usuario que realiza la compra es el mismo que se ha logueado (se podría haber cambiado en el cliente con la variable user_id)
-    if(request.user.user_id != request.body.user_id) return response.sendStatus(403)
-    db.insertarPedido((rows) => {
-        response.status(201).send(rows)
-    }, request.body);
+// router.post('/', middleware.authToken, (request, response) => {
+//     // Comprobación si el usuario que realiza la compra es el mismo que se ha logueado (se podría haber cambiado en el cliente con la variable user_id)
+//     if(request.user.user_id != request.body.user_id) return response.sendStatus(403)
+//     db.insertarPedido((rows) => {
+//         response.status(201).send(rows)
+//     }, request.body);
+// });
+
+router.post('/', middleware.authToken, async (request, response) => {
+    try {
+        // Validar los datos del pedido usando Zod
+        const validatedOrder = orderSchema.parse(request.body); // Validar los datos con el esquema de Zod
+
+        // Comprobación si el usuario que realiza la compra es el mismo que se ha logueado
+        if (request.user.user_id !== validatedOrder.user_id) {
+            return response.sendStatus(403);  // El usuario que realiza la compra no es el mismo que el usuario autenticado
+        }
+
+        // Insertar el pedido en la base de datos
+        db.insertarPedido((rows) => {
+            response.status(201).json({
+                message: 'Pedido creado correctamente',
+                // orderId: rows.insertId  // Asumimos que `insertId` es el ID del nuevo pedido
+            });
+        }, validatedOrder);
+
+    } catch (error) {
+        // Si Zod valida incorrectamente, devolver un error con los detalles
+        response.status(400).json({
+            message: "Error de validación de datos",
+            errors: error.errors  // Aquí retornamos los errores de Zod
+        });
+    }
 });
 
 router.get('/factura-pdf', middleware.authToken, async (req, res) => {

@@ -131,24 +131,37 @@ class DB{
         });
     }
 
-    async registrarUsuarioBcryptjs(callback, newUser, isAdmin=0, isActive=1){
-        let passwordCrypt = await bcryptjs.hash(newUser.password, Number(process.env.BCRYPT_SALT_ROUNDS))
-        isAdmin = isAdmin ? 1 : 0;
-        isActive = isActive ? 1 : 0;
-        const conexion = this.createMySQLConnection();
-        this.openConnection(conexion);
-        conexion.query(`SELECT us.username FROM users as us WHERE us.username="${newUser.username}"`, function(err, rows, fields) {
-            if (rows.length == 1) {
-                let mensajeError = 'El usuario ya existe, pruebe registrarse con otro nombre de usuario';
-                callback(mensajeError);
-            }else{
-                conexion.query(`INSERT INTO users (username, first_name, last_name, email, password, is_admin, is_active) VALUES ("${newUser.username}", "${newUser.firstName}", "${newUser.lastName}", "${newUser.email}", "${passwordCrypt}", "${isAdmin}", "${isActive}")`, function(err, rows, fields) {
-                    if (err) throw err;
-                    callback(undefined);
-                });
-            }
+    async registrarUsuarioBcryptjs(callback, newUser, isAdmin = 0, isActive = 1) {
+        try {
+            // Encriptar la contraseña
+            let passwordCrypt = await bcryptjs.hash(newUser.password, Number(process.env.BCRYPT_SALT_ROUNDS));
+    
+            // Asegurarse de que isAdmin e isActive sean valores binarios (0 o 1)
+            isAdmin = isAdmin ? 1 : 0;
+            isActive = isActive ? 1 : 0;
+    
+            // Conexión a la base de datos
+            const conexion = this.createMySQLConnection();
+            this.openConnection(conexion);
+    
+            // Consulta para insertar el nuevo usuario
+            conexion.query(
+                `INSERT INTO users (username, first_name, last_name, email, password, is_admin, is_active) 
+                VALUES ("${newUser.username}", "${newUser.firstName}", "${newUser.lastName}", "${newUser.email}", "${passwordCrypt}", "${isAdmin}", "${isActive}")`,
+                function (err, rows, fields) {
+                    if (err) {
+                        callback(err); // Si ocurre un error al insertar, lo devolvemos
+                    } else {
+                        callback(undefined); // Sin error, indicamos éxito
+                    }
+                }
+            );
+            // Cerrar la conexión
             DB.closeConnection(conexion);
-        });
+    
+        } catch (error) {
+            callback(error); // Si ocurre un error inesperado, lo devolvemos
+        }
     }
     
     obtenerProducto(callback, id){
@@ -432,6 +445,162 @@ class DB{
           DB.closeConnection(conexion);
         });
     };
+
+    async verificarCategoriaExiste(categoriaId) {
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+    
+        return new Promise((resolve, reject) => {
+            conexion.query('SELECT id FROM categories WHERE id = ?', [categoriaId], (err, results) => {
+                try{
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(results.length > 0);  // Si hay resultados, la categoría existe
+                    }
+                } finally {
+                    DB.closeConnection(conexion); // Cerramos la conexión siempre, independientemente de lo que suceda
+                }
+            });
+        });
+    }
+
+    // Función para verificar si el nombre de la categoría ya existe, excluyendo el ID actual
+    verificarNombreCategoriaExiste(nombreCategoria, categoriaId = 0) {
+        return new Promise((resolve, reject) => {
+            const conexion = this.createMySQLConnection();
+            this.openConnection(conexion);
+
+            // Verificamos si el nombre de la categoría ya existe, pero excluimos el ID actual
+            conexion.query(
+                'SELECT COUNT(*) AS count FROM categories WHERE name = ? AND id != ?',
+                [nombreCategoria, categoriaId],
+                (err, results) => {
+                    try {
+                        if (err) {
+                            reject(err); // Si ocurre un error en la consulta, lo rechazamos
+                        } else {
+                            const existe = results[0].count > 0; // Si el conteo es mayor que 0, la categoría ya existe
+                            resolve(existe); // Resolvemos el valor booleano indicando si existe o no
+                        }
+                    } finally {
+                        DB.closeConnection(conexion); // Cerramos la conexión siempre
+                    }
+                }
+            );
+        });
+    }
+
+    async verificarProductoExiste(productoId) {
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+    
+        return new Promise((resolve, reject) => {
+            conexion.query('SELECT COUNT(*) AS count FROM products WHERE id = ?', [productoId], (err, results) => {
+                try{
+                    if (err) {
+                        reject(err); // Si ocurre un error, rechazamos la promesa
+                    } else {
+                        const existe = results[0].count > 0;
+                        resolve(existe); // Si el conteo es mayor que 0, el producto existe
+                    }
+                } finally {
+                    DB.closeConnection(conexion); // Cerramos la conexión siempre, independientemente de lo que suceda
+                }
+            });
+        });
+    }
+
+    // Función para verificar si el nombre del producto ya existe, excluyendo el ID actual
+    verificarNombreProductoExiste(nombreProducto, productoId = 0) {
+        return new Promise((resolve, reject) => {
+            const conexion = this.createMySQLConnection();
+            this.openConnection(conexion);
+
+            // Verificamos si el nombre del producto ya existe, pero excluimos el ID actual
+            conexion.query(
+                'SELECT COUNT(*) AS count FROM products WHERE name = ? AND id != ?',
+                [nombreProducto, productoId],
+                (err, results) => {
+                    try {
+                        if (err) {
+                            reject(err); // Si ocurre un error en la consulta, lo rechazamos
+                        } else {
+                            const existe = results[0].count > 0; // Si el conteo es mayor que 0, el producto ya existe con otro ID
+                            resolve(existe); // Resolvemos el valor booleano indicando si existe o no
+                        }
+                    } finally {
+                        DB.closeConnection(conexion); // Cerramos la conexión siempre
+                    }
+                }
+            );
+        });
+    }
+
+
+    async verificarUsuarioExiste(userId) {
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+    
+        return new Promise((resolve, reject) => {
+            conexion.query('SELECT COUNT(*) AS count FROM users WHERE id = ?', [userId], (err, results) => {
+                try{
+                    if (err) {
+                        reject(err); // Si ocurre un error en la consulta, lo rechazamos
+                    } else {
+                        resolve(results[0].count > 0); // Si el conteo es mayor que 0, el usuario existe
+                    }
+                } finally {
+                    DB.closeConnection(conexion); // Cerramos la conexión siempre, independientemente de lo que suceda
+                }
+            });
+        });
+    }
+
+    // Función para verificar si el nombre de usuario ya existe, excluyendo el ID actual
+    verificarNombreUsuarioExiste(nombreUsuario, usuarioId = 0) {
+        return new Promise((resolve, reject) => {
+            const conexion = this.createMySQLConnection();
+            this.openConnection(conexion);
+
+            // Verificamos si el nombre de usuario ya existe, pero excluimos el ID actual
+            conexion.query(
+                'SELECT COUNT(*) AS count FROM users WHERE username = ? AND id != ?',
+                [nombreUsuario, usuarioId],
+                (err, results) => {
+                    try {
+                        if (err) {
+                            reject(err); // Si ocurre un error en la consulta, lo rechazamos
+                        } else {
+                            const existe = results[0].count > 0; // Si el conteo es mayor que 0, el nombre de usuario ya está en uso
+                            resolve(existe); // Resolvemos el valor booleano indicando si existe o no
+                        }
+                    } finally {
+                        DB.closeConnection(conexion); // Cerramos la conexión siempre
+                    }
+                }
+            );
+        });
+    }
+
+    async verificarPedidoExiste(orderId) {
+        const conexion = this.createMySQLConnection();
+        this.openConnection(conexion);
+    
+        return new Promise((resolve, reject) => {
+            conexion.query('SELECT COUNT(*) AS count FROM orders WHERE id = ?', [orderId], (err, results) => {
+                try{
+                    if (err) {
+                        reject(err); // Si ocurre un error en la consulta, lo rechazamos
+                    } else {
+                        resolve(results[0].count > 0); // Si el conteo es mayor que 0, el pedido existe
+                    }
+                } finally {
+                    DB.closeConnection(conexion); // Cerramos la conexión siempre, independientemente de lo que suceda
+                }
+            });
+        });
+    }
 
 }
 

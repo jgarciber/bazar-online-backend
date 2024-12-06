@@ -56,17 +56,17 @@ app.post('/login', function (req, res) {
     }, req.body.username, req.body.password);
 });
 
-app.post('/signup', function (req, res) {
-    db.registrarUsuarioBcryptjs((err) => {
-        if (err == undefined){
-            res.status(201).json({
-                message: `Se ha registrado el usuario correctamente`
-            });
-        }else{
-            res.send(err);
-        } 
-    }, req.body);
-});
+// app.post('/signup', function (req, res) {
+//     db.registrarUsuarioBcryptjs((err) => {
+//         if (err == undefined){
+//             res.status(201).json({
+//                 message: `Se ha registrado el usuario correctamente`
+//             });
+//         }else{
+//             res.send(err);
+//         } 
+//     }, req.body);
+// });
 
 // app.get('/logout', function (req, res) {
 //     req.session.destroy();
