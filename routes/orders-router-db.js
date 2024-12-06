@@ -89,14 +89,6 @@ router.get('/', middleware.authToken, (req, res) => {
     }
 });
 
-// router.post('/', middleware.authToken, (request, response) => {
-//     // Comprobación si el usuario que realiza la compra es el mismo que se ha logueado (se podría haber cambiado en el cliente con la variable user_id)
-//     if(request.user.user_id != request.body.user_id) return response.sendStatus(403)
-//     db.insertarPedido((rows) => {
-//         response.status(201).send(rows)
-//     }, request.body);
-// });
-
 router.post('/', middleware.authToken, async (request, response) => {
     try {
         // Validar los datos del pedido usando Zod

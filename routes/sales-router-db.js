@@ -47,14 +47,6 @@ router.get('/', middleware.authToken, (request, response) => {
     }
 });
 
-// router.post('/', middleware.authToken, (request, response) => {
-//     // Comprobación si el usuario que realiza la compra es el mismo que se ha logueado (se podría haber cambiado en el cliente con la variable user_id)
-//     if(request.user.user_id != request.body.order.user_id) return response.sendStatus(403)
-//     db.insertarVenta((rows) => {
-//         response.status(201).send(rows)
-//     }, request.body.product, request.body.order);
-// });
-
 router.post('/', middleware.authToken, async (request, response) => {
     try {
         // Validar el cuerpo de la solicitud

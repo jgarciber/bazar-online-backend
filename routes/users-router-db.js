@@ -76,19 +76,6 @@ router.get('/', middleware.authToken, (req, res) => {
     }
 });
 
-// router.post('/', middleware.authTokenAdmin, (req, res) => {
-//     db.registrarUsuarioBcryptjs((err) => {
-//         if (err == undefined){
-//             // res.status(201).send();
-//             res.status(201).json({
-//                 message: `Se ha registrado el usuario '${req.body.username}' correctamente`
-//             });
-//         }else{
-//             res.send(err);
-//         } 
-//     }, req.body);
-// });
-
 router.post('/', async (req, res) => {
     try {
         // Validar los datos del usuario usando Zod
@@ -127,23 +114,6 @@ router.post('/', async (req, res) => {
         });
     }
 });
-
-// router.put('/:id', middleware.authToken, (req, res) => {
-//     if(req.user.is_admin || (req.user.user_id == req.params.id)){
-//         db.modificarUsuario((rows) => {
-//             if (rows != null){
-//                 // res.status(204).send();
-//                 res.status(200).json({
-//                     message: `Se ha modificado el usuario '${req.body.username}' correctamente`
-//                 });
-//             }else{
-//                 res.status(404).send();
-//             }
-//         }, req.params.id, req.body);
-//     }else{
-//         res.status(403).send('Acción no permitida');
-//     }
-// });
 
 router.put('/:id', middleware.authToken, async (req, res) => {
     try {
@@ -184,23 +154,6 @@ router.put('/:id', middleware.authToken, async (req, res) => {
         });
     }
 });
-
-// router.delete('/:id', middleware.authTokenAdmin, (req, res) => {
-//     //Un usuario no puede borrarse a sí mismo, debe hacerlo otro usuario administrador
-//     if(req.user.user_id == req.params.id){
-//         return res.status(403).send('El usuario no puede borrarse a sí mismo, debe hacerlo otro usuario administrador autorizado')
-//     }
-//     db.borrarUsuario((rows) => {
-//         if (rows != null){
-//             // res.status(204).send();
-//             res.status(200).json({
-//                 message: `Se ha borrado el usuario correctamente`
-//             });
-//         }else{
-//             res.status(404).send();
-//         }
-//     }, req.params.id);
-// });
 
 router.delete('/:id', middleware.authTokenAdmin, (req, res) => {
     try {

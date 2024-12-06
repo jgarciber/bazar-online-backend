@@ -29,14 +29,6 @@ router.get('/', middleware.authToken, (request, response) => {
     })
 });
 
-// router.post('/', middleware.authTokenAdmin, (request, response) => {
-//     db.insertarCategoria((rows) => {
-//         response.status(201).json({
-//             message: `Se ha añadido la categoría '${request.body.name}' correctamente`
-//         });
-//     }, request.body);
-// });
-
 router.post('/', middleware.authTokenAdmin, async (request, response) => {
     try {
         // Validar los datos de la categoría usando Zod
@@ -67,19 +59,6 @@ router.post('/', middleware.authTokenAdmin, async (request, response) => {
         });
     }
 });
-
-// router.put('/:id', middleware.authTokenAdmin, (request, response) => {
-//     db.modificarCategoria((rows) => {
-//         if (rows != null){
-//             // response.status(204).send();
-//             response.status(200).json({
-//                 message: `Se ha modificado la categoría '${request.body.name}' correctamente`
-//             });
-//         }else{
-//             response.status(404).send();
-//         }
-//     }, request.params.id, request.body);
-// });
 
 router.put('/:id', middleware.authTokenAdmin, async (request, response) => {
     try {
@@ -120,19 +99,6 @@ router.put('/:id', middleware.authTokenAdmin, async (request, response) => {
         });
     }
 });
-
-// router.delete('/:id', middleware.authTokenAdmin, (request, response) => {
-//     db.borrarCategoria((rows) => {
-//         if (rows != null){
-//             // response.status(204).send();
-//             response.status(200).json({
-//                 message: 'Se ha borrado la categoría correctamente'
-//             });
-//         }else{
-//             response.status(404).send();
-//         }
-//     }, request.params.id);
-// });
 
 router.delete('/:id', middleware.authTokenAdmin, async (request, response) => {
     try {
