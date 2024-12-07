@@ -759,8 +759,8 @@ class DB{
         }
     
         // 2. Calcular descuentos e impuestos (esto se debe adaptar a tu lógica de negocio)
-        const descuento = 0.1;  // Ejemplo: podría ser un porcentaje o una cantidad
-        const IVA = 0.21;
+        const descuento = process.env.DESCUENTO;  // Ejemplo: podría ser un porcentaje o una cantidad
+        const IVA = process.env.IVA;
 
         const descuentoTotal = total * descuento;
         const subtotalConDescuento = total - descuentoTotal;
