@@ -27,6 +27,37 @@ const productoSchema = z.object({
 });
 
 
+// Esquema para validar el cart y user_id
+const checkoutSchema = z.object({
+    user_id: z.string().transform((val) => {
+        const userId = parseInt(val, 10); // Convertir a número
+        if (isNaN(userId) || userId <= 0) {
+            throw new Error('El user_id debe ser un número mayor que 0');
+        }
+        return userId;
+    }),
+    
+    cart: z.array(
+        z.object({
+            product_id: z.string().transform((val) => {
+            const productId = parseInt(val, 10); // Convertir a número
+            if (isNaN(productId) || productId <= 0) {
+                throw new Error('El product_id debe ser un número mayor que 0');
+            }
+            return productId;
+            }),
+            
+            quantity: z.string().transform((val) => {
+            const quantity = parseInt(val, 10); // Convertir quantity a número
+            if (isNaN(quantity) || quantity < 1) {
+                throw new Error('La cantidad debe ser un número entero mayor o igual a 1');
+            }
+            return quantity;
+            }),
+        })
+        ).min(1, 'El carrito debe contener al menos un producto'), // El carrito no puede estar vacío
+    });
+
 // products (Productos):
 // Contiene los productos disponibles en la tienda.
 // Campos: ‘id’ (clave primaria), ‘name’, ‘price’, ‘stock’, ‘category’ (clave foránea de ‘categories’), ‘created_at’.
@@ -174,6 +205,45 @@ router.delete('/:id', middleware.authTokenAdmin, async (request, response) => {
             message: "Hubo un problema al intentar eliminar el producto.",
             error: error.message
         });
+    }
+});
+
+router.post('/checkout', middleware.authToken, async (req, res) => {
+    const { user_id, cart } = req.body;
+  
+    try {
+        // Validar los datos utilizando Zod
+        checkoutSchema.parse({ user_id, cart });
+    
+        // Verificar que el usuario que realiza la compra sea el mismo que está logueado
+        if (req.user.user_id != user_id) {
+            return res.status(403).json({ error: "No tienes permisos para realizar esta compra" });
+        }
+    
+        // Llamada a la función checkout del archivo db.js
+        const result = await db.checkout(user_id, cart);
+    
+        if (result.status === 'error') {
+            // Si ocurre un error, devolvemos un mensaje de error y un código 400
+            return res.status(400).json({ error: result.message });
+        }
+    
+        // Si todo salió bien, devolvemos la respuesta con el ID del pedido y el total
+        return res.status(200).json({
+            message: 'Compra realizada correctamente',
+            orderId: result.orderId,
+            totalFinal: result.totalFinal,
+            itemsFactura: result.itemsFactura,
+        });
+  
+    } catch (err) {
+        if (err instanceof z.ZodError) {
+            // Si hay un error de validación, devolvemos un código 400 con los detalles del error
+            return res.status(400).json({ error: err.errors });
+        }
+        // Si ocurre otro tipo de error
+        console.log('Error al procesar la compra:', err);
+        return res.status(500).json({ error: 'Hubo un error al procesar la compra' });
     }
 });
 

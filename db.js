@@ -602,6 +602,207 @@ class DB{
         });
     }
 
+
+    // Iniciar una transacción
+    async startTransaction() {
+        const connection = this.createMySQLConnection();
+        connection.connect();
+        await new Promise((resolve, reject) => {
+            connection.beginTransaction((err) => {
+                if (err) {
+                reject(err);
+                } else {
+                resolve(connection);
+                }
+            });
+        });
+        return connection;
+    }
+
+    // Confirmar la transacción
+    async commitTransaction(connection) {
+        return new Promise((resolve, reject) => {
+            connection.commit((err) => {
+                if (err) {
+                reject(err);
+                } else {
+                resolve();
+                }
+            });
+        });
+    }
+
+    // Revertir la transacción
+    async rollbackTransaction(connection) {
+        return new Promise((resolve, reject) => {
+            connection.rollback(() => {
+                resolve();
+            });
+        });
+    }
+
+    // Obtener un producto por ID
+    async getProductById(product_id, connection) {
+        return new Promise((resolve, reject) => {
+            connection.query(
+                'SELECT * FROM products WHERE id = ?',
+                [product_id],
+                (err, results) => {
+                if (err) reject(err);
+                resolve(results[0]);
+                }
+            );
+        });
+    }
+
+    // Insertar un pedido
+    async createOrder(user_id, totalFinal, itemsFactura, descuento, descuentoTotal, IVA, impuestos, connection) {
+        return new Promise((resolve, reject) => {
+            const totalArticulos = itemsFactura.reduce((acc, item) => acc + item.quantity, 0);
+            const subtotal = itemsFactura.reduce((acc, item) => acc + item.subtotal, 0);
+            const subtotalConDescuento = subtotal - descuentoTotal;
+            
+            const query = `
+                INSERT INTO orders 
+                (user_id, total_articles, subtotal, discount, calculated_discount, subtotal_with_discount, taxes, calculated_taxes, total) 
+                VALUES 
+                (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `;
+
+            connection.query(
+                query,
+                [user_id, totalArticulos, subtotal, descuento, descuentoTotal, subtotalConDescuento, IVA, impuestos, totalFinal],
+                (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results.insertId); // Devuelve el ID del pedido insertado
+                }
+                }
+            );
+        });
+    }
+
+    // Insertar un registro de venta
+    async createSaleRecord(orderId, user_id, product_id, quantity, price, connection) {
+        return new Promise((resolve, reject) => {
+            const total = price * quantity;
+            const query = `
+                INSERT INTO sales 
+                (product_id, quantity, total, user_id, order_id) 
+                VALUES 
+                (?, ?, ?, ?, ?)
+            `;
+
+            connection.query(
+                query,
+                [product_id, quantity, total, user_id, orderId],
+                (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results);
+                }
+                }
+            );
+        });
+    }
+
+    // Actualizar el stock del producto
+    async updateProductStock(product_id, newStock, connection) {
+        return new Promise((resolve, reject) => {
+            connection.query(
+                'UPDATE products SET stock = ? WHERE id = ?',
+                [newStock, product_id],
+                (err, results) => {
+                if (err) reject(err);
+                resolve(results);
+                }
+            );
+        });
+    }
+
+  async checkout(user_id, cart) {  
+    // Iniciar la transacción
+    const connection = await this.startTransaction();
+  
+    try {
+        let total = 0;  // Total de la factura
+        let itemsFactura = [];  // Para almacenar los ítems de la factura
+    
+        // 1. Verificar disponibilidad de stock y obtener los datos de los productos
+        for (const item of cart) {
+            const product = await this.getProductById(item.product_id, connection);
+    
+            if (!product) {
+                throw new Error(`Producto con ID ${item.product_id} no encontrado`);
+            }
+    
+            // Verificar si hay stock suficiente
+            if (product.stock < item.quantity) {
+                throw new Error(`No hay suficiente stock para el producto ${product.name}`);
+            }
+    
+            // Calcular el precio total para este producto (sin impuestos y sin descuentos)
+            const subtotalProducto = product.price * item.quantity;
+            const itemFactura = {
+                product_id: product.id,
+                product_name: product.name,
+                quantity: item.quantity,
+                unit_price: product.price,
+                subtotal: subtotalProducto
+            };
+            itemsFactura.push(itemFactura);
+    
+            // Sumar al total general
+            total += subtotalProducto;
+        }
+    
+        // 2. Calcular descuentos e impuestos (esto se debe adaptar a tu lógica de negocio)
+        const descuento = 0.1;  // Ejemplo: podría ser un porcentaje o una cantidad
+        const IVA = 0.21;
+
+        const descuentoTotal = total * descuento;
+        const subtotalConDescuento = total - descuentoTotal;
+        const impuestos = subtotalConDescuento * IVA;
+        const totalFinal = subtotalConDescuento + impuestos;
+    
+        // 3. Crear el pedido en la base de datos
+        const orderId = await this.createOrder(user_id, totalFinal, itemsFactura, descuento*100, descuentoTotal, IVA*100, impuestos, connection);
+    
+        // 4. Reducir el stock de los productos y registrar las ventas
+        for (const item of cart) {
+            const product = await this.getProductById(item.product_id, connection);
+            const newStock = product.stock - item.quantity;
+    
+            // Actualizar stock
+            await this.updateProductStock(item.product_id, newStock, connection);
+    
+            // Crear el registro de venta
+            await this.createSaleRecord(orderId, user_id, item.product_id, item.quantity, product.price, connection);
+        }
+    
+        // Confirmar la transacción
+        await this.commitTransaction(connection);
+    
+        // Responder con el ID del pedido y los detalles
+        return {
+            status: 'success',
+            orderId,
+            totalFinal,
+            itemsFactura
+        };
+  
+    } catch (error) {
+        // Si ocurre algún error, revertir la transacción
+        await this.rollbackTransaction(connection);
+        return {
+            status: 'error',
+            message: error.message
+        };
+    }
+  }
+
 }
 
 module.exports = DB;
