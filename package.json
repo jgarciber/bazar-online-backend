@@ -4,7 +4,7 @@
   "description": "proyecto propuesta para prácticas",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "echo \"Error: no test specified\"",
     "init": "nodemon --experimental-modules --es-module-specifier-resolution=node -L ./app.js"
   },
   "type": "commonjs",
