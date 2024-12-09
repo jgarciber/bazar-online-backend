@@ -658,7 +658,7 @@ class DB{
     // Insertar un pedido
     async createOrder(user_id, totalFinal, itemsFactura, descuento, descuentoTotal, IVA, impuestos, connection) {
         return new Promise((resolve, reject) => {
-            const totalArticulos = itemsFactura.reduce((acc, item) => acc + item.quantity, 0);
+            const totalArticulos = itemsFactura.reduce((acc, item) => acc + Number(item.quantity), 0);
             const subtotal = itemsFactura.reduce((acc, item) => acc + item.subtotal, 0);
             const subtotalConDescuento = subtotal - descuentoTotal;
             
