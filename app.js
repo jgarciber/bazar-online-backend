@@ -29,6 +29,14 @@ app.use('/users', usersRouter);
 const ordersRouter = require("./routes/orders-router-db");
 app.use('/orders', ordersRouter);
 
+
+
+app.use((req, res, next) => {
+    res.setHeader('Content-Security-Policy', "default-src 'self'; connect-src 'self' http://bazar-online-back-2-g9hfc8bbhxepetes.spaincentral-01.azurewebsites.net;");
+    next();
+});
+  
+
 app.listen(PORT, () => {
     console.log("Server Listening on PORT:", PORT);
 });
