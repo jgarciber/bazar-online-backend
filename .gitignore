@@ -1,5 +1,8 @@
 # Ignorar el archivo .env
 .env
+.env.example
+Dockerfile
+docker-compose.yaml
 
 # Ignorar la carpeta node_modules
 /node_modules/
